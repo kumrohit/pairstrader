@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pairs Book — Performance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#12161C; --panel:#1A2029; --line:#2A3340; --ink:#E9E6DF; --dim:#8B94A3;
+  --long:#3FB8AF;   /* teal — long leg / positive */
+  --short:#E0A43C;  /* amber — short leg / costs */
+  --loss:#C75C5C;   /* muted red — negative */
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+  --disp:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5;padding:28px 32px 60px}
+header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+h1{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.01em}
+h1 span{color:var(--dim);font-weight:500}
+.toggle{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px}
+.toggle button{background:none;border:0;color:var(--dim);font-family:var(--mono);font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer}
+.toggle button:focus-visible{outline:2px solid var(--long)}
+.toggle button.on{background:var(--line);color:var(--ink)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.stat .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
+.stat .v{font-family:var(--disp);font-size:21px;font-weight:700;margin-top:2px}
+.pos{color:var(--long)} .neg{color:var(--loss)}
+.row{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:22px}
+@media(max-width:900px){.row{grid-template-columns:1fr}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
+.panel h2{font-family:var(--disp);font-size:14px;font-weight:500;color:var(--dim);margin-bottom:12px}
+svg{width:100%;display:block}
+table{width:100%;border-collapse:collapse}
+th{color:var(--dim);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+th:first-child,td:first-child{text-align:left}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid #202834}
+tbody tr:hover{background:#202834}
+.bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin-top:3px}
+.bar i{position:absolute;top:0;bottom:0;border-radius:3px}
+.note{color:var(--dim);font-size:12px;margin-top:20px;max-width:70ch}
+#empty{color:var(--dim);padding:40px;text-align:center;display:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>Pairs Book <span>/ walk-forward performance</span></h1>
+  <div class="toggle" id="engines" role="tablist" aria-label="Signal engine"></div>
+</header>
+
+<div id="empty">No results yet — run <b>python scripts/run_demo.py</b>, then refresh.</div>
+
+<div id="app" style="display:none">
+  <div class="grid" id="stats"></div>
+
+  <div class="row">
+    <div class="panel"><h2>Book equity (net, walk-forward)</h2><svg id="equity" viewBox="0 0 720 240" role="img" aria-label="Equity curve"></svg></div>
+    <div class="panel"><h2>Gross → net attribution</h2><svg id="waterfall" viewBox="0 0 340 240" role="img" aria-label="Cost waterfall"></svg>
+      <div class="note" id="costnote" style="margin-top:8px"></div></div>
+  </div>
+
+  <div class="panel">
+    <h2>Per-pair ledger</h2>
+    <table id="pairs"><thead><tr>
+      <th>Pair</th><th>Trades</th><th>Win %</th><th>Gross</th><th>Costs</th><th>Net</th><th>Max DD</th><th>Sharpe</th><th>Net share</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <p class="note" id="footnote"></p>
+</div>
+
+<script>
+const fmt = n => (n<0?'−':'') + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
+let DATA=null, engine=null;
+
+async function load(){
+  const r = await fetch('/api/results');
+  if(!r.ok){ document.getElementById('empty').style.display='block'; return; }
+  DATA = await r.json();
+  const names = Object.keys(DATA.engines);
+  engine = names[0];
+  const tg = document.getElementById('engines');
+  tg.innerHTML = names.map(n=>`<button role="tab" data-e="${n}">${n}</button>`).join('');
+  tg.querySelectorAll('button').forEach(b=>b.onclick=()=>{engine=b.dataset.e; render();});
+  document.getElementById('app').style.display='block';
+  render();
+}
+
+function render(){
+  document.querySelectorAll('#engines button').forEach(b=>b.classList.toggle('on',b.dataset.e===engine));
+  const E = DATA.engines[engine], B = E.summary.book, T = E.summary.trades;
+
+  const stats = [
+    ['Net P&L', fmt(B.net_pnl), B.net_pnl>=0?'pos':'neg'],
+    ['Return on capital', B.return_on_capital_pct.toFixed(1)+'%', B.return_on_capital_pct>=0?'pos':'neg'],
+    ['Sharpe', B.sharpe.toFixed(2), ''],
+    ['Sortino', B.sortino.toFixed(2), ''],
+    ['Max drawdown', fmt(B.max_drawdown), 'neg'],
+    ['Trades', T.count+' ('+T.win_rate_pct+'% win)', ''],
+    ['Median hold', T.median_holding_days+'d', ''],
+    ['Cost drag', (B.cost_share_of_gross_pct??0)+'% of gross', '']
+  ];
+  document.getElementById('stats').innerHTML = stats.map(([k,v,c])=>
+    `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+
+  drawEquity(E.equity);
+  drawWaterfall(B);
+  drawPairs(E.summary.per_pair, B.net_pnl);
+
+  document.getElementById('footnote').textContent =
+    `${E.windows.length} walk-forward windows · formation/trading split, hedge ratios and thresholds frozen at formation · ` +
+    `costs: fees + slippage per leg per side, plus funding drag while positions are open.`;
+}
+
+function drawEquity(eq){
+  const svg=document.getElementById('equity');
+  const entries=Object.entries(eq); if(!entries.length){svg.innerHTML='';return;}
+  const vals=entries.map(e=>e[1]);
+  const min=Math.min(0,...vals), max=Math.max(...vals), W=720,H=240,P=34;
+  const X=i=>P+(W-2*P)*i/(vals.length-1), Y=v=>H-P-(H-2*P)*(v-min)/(max-min||1);
+  let path='M'+vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' L');
+  const zero=Y(0);
+  const ticks=[0,.25,.5,.75,1].map(f=>min+f*(max-min));
+  svg.innerHTML =
+    ticks.map(t=>`<line x1="${P}" x2="${W-P}" y1="${Y(t)}" y2="${Y(t)}" stroke="#232B36" stroke-width="1"/>
+      <text x="${P-6}" y="${Y(t)+4}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${fmt(t)}</text>`).join('') +
+    `<line x1="${P}" x2="${W-P}" y1="${zero}" y2="${zero}" stroke="#3A4452" stroke-width="1"/>` +
+    `<path d="${path} L${X(vals.length-1)},${zero} L${X(0)},${zero} Z" fill="#3FB8AF" opacity="0.08"/>` +
+    `<path d="${path}" fill="none" stroke="#3FB8AF" stroke-width="1.8"/>` +
+    `<text x="${P}" y="${H-8}" fill="#8B94A3" font-size="10" font-family="IBM Plex Mono">${entries[0][0]}</text>` +
+    `<text x="${W-P}" y="${H-8}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${entries[entries.length-1][0]}</text>`;
+}
+
+function drawWaterfall(B){
+  const svg=document.getElementById('waterfall');
+  const g=B.gross_pnl, c=B.total_costs, n=B.net_pnl;
+  const max=Math.max(g,1), W=340,H=240,P=30,bw=70;
+  const y=v=>H-P-(H-2*P-20)*v/max;
+  const bars=[
+    {x:P, h0:0, h1:g, col:'#3FB8AF', lab:'gross', val:g},
+    {x:P+bw+35, h0:n, h1:g, col:'#E0A43C', lab:'costs', val:-c},
+    {x:P+2*(bw+35), h0:0, h1:n, col:n>=0?'#3FB8AF':'#C75C5C', lab:'net', val:n}
+  ];
+  svg.innerHTML = bars.map(b=>
+    `<rect x="${b.x}" y="${y(b.h1)}" width="${bw}" height="${Math.max(y(b.h0)-y(b.h1),2)}" fill="${b.col}" opacity="${b.lab==='costs'?0.85:1}" rx="3"/>
+     <text x="${b.x+bw/2}" y="${y(b.h1)-8}" fill="#E9E6DF" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${fmt(b.val)}</text>
+     <text x="${b.x+bw/2}" y="${H-10}" fill="#8B94A3" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${b.lab}</text>`).join('');
+  document.getElementById('costnote').textContent =
+    `Costs consumed ${B.cost_share_of_gross_pct}% of gross — the viability margin lives here.`;
+}
+
+function drawPairs(pairs, bookNet){
+  const tb=document.querySelector('#pairs tbody');
+  tb.innerHTML = pairs.map(p=>{
+    const share = bookNet>0 ? Math.max(0,100*p.net_pnl/bookNet) : 0;
+    return `<tr>
+      <td>${p.pair}</td><td>${p.trades}</td><td>${p.win_rate}</td>
+      <td>${fmt(p.gross_pnl)}</td><td style="color:var(--short)">${fmt(p.costs)}</td>
+      <td class="${p.net_pnl>=0?'pos':'neg'}">${fmt(p.net_pnl)}</td>
+      <td class="neg">${fmt(p.max_dd)}</td><td>${p.sharpe.toFixed(2)}</td>
+      <td style="width:120px"><div class="bar"><i style="left:0;width:${Math.min(share,100)}%;background:var(--long)"></i></div></td>
+    </tr>`;
+  }).join('');
+}
+
+load();
+</script>
+</body>
+</html>
