@@ -42,7 +42,7 @@ def summarize(result: BacktestResult, capital_deployed: float) -> dict:
     gross = sum(t.gross_pnl for t in trades)
     costs = sum(t.costs for t in trades)
     net = sum(t.net_pnl for t in trades)
-    closed = [t for t in trades if t.exit_reason == "closed"]
+    closed = [t for t in trades if t.exit_reason != "window_end"]
     winners = [t for t in closed if t.net_pnl > 0]
     book_pnl = result.daily_pnl.sum(axis=1) if not result.daily_pnl.empty else pd.Series(dtype=float)
 
