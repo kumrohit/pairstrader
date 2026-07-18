@@ -82,6 +82,7 @@ def _pair_window_pnl(prices: pd.DataFrame, spec: PairSpec, pos: pd.Series,
     entry_i = 0
     direction = 0
     g_acc = c_acc = 0.0
+    exit_reasons: dict[int, str] = pos.attrs.get("exit_reasons", {})
     pv, gv, ev, fv = pos.values, gross.values, exec_costs.values, funding.values
     idx = pos.index
     for t in range(len(pv)):
@@ -96,13 +97,13 @@ def _pair_window_pnl(prices: pd.DataFrame, spec: PairSpec, pos: pd.Series,
                 if t == len(pv) - 1 and pv[t] != 0:
                     reason = "window_end"
                 else:
-                    reason = "closed"
+                    reason = exit_reasons.get(t, "closed")
                 trades.append(Trade(
                     pair=spec.name, engine=engine_name, direction=direction,
                     entry_time=str(idx[entry_i].date()), exit_time=str(idx[t].date()),
                     holding_days=hold, gross_pnl=round(g_acc, 2),
                     costs=round(c_acc, 2), net_pnl=round(g_acc - c_acc, 2),
-                    exit_reason=reason, converged=bool((g_acc - c_acc) > 0 and reason == "closed"),
+                    exit_reason=reason, converged=(reason == "converged"),
                 ))
                 in_pos = False
     return net

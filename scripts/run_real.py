@@ -47,6 +47,9 @@ def main() -> None:
             "summary": summary,
             "equity": {str(k.date()): round(float(v), 2) for k, v in result.equity.items()},
             "trades": [asdict(t) for t in result.trades],
+            "pair_equity": {c: {str(k.date()): round(float(v), 2)
+                                for k, v in result.daily_pnl[c].dropna().cumsum().items()}
+                            for c in (result.daily_pnl.columns if not result.daily_pnl.empty else [])},
             "pair_specs": result.pair_specs,
             "windows": result.windows,
         }

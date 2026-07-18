@@ -1,5 +1,7 @@
 # Pairs Trading Platform (crypto v1)
 
+**New here? Read [STRATEGY.md](STRATEGY.md)** — a full plain-language + math walkthrough of what the platform does and why.
+
 Walk-forward pairs trading research and performance-tracking platform. Design follows the empirical literature: cointegration-based selection, formation/trading window separation, explicit cost modeling, and drawdown-first performance reporting.
 
 ## Architecture

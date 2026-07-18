@@ -63,7 +63,19 @@ def summarize(result: BacktestResult, capital_deployed: float) -> dict:
             })
         per_pair.sort(key=lambda d: -d["net_pnl"])
 
+    by_reason: dict[str, dict] = {}
+    for t in trades:
+        r = by_reason.setdefault(t.exit_reason, {"count": 0, "net_pnl": 0.0,
+                                                 "gross_pnl": 0.0, "avg_holding_days": 0.0})
+        r["count"] += 1
+        r["net_pnl"] = round(r["net_pnl"] + t.net_pnl, 2)
+        r["gross_pnl"] = round(r["gross_pnl"] + t.gross_pnl, 2)
+        r["avg_holding_days"] += t.holding_days
+    for r in by_reason.values():
+        r["avg_holding_days"] = round(r["avg_holding_days"] / max(r["count"], 1), 1)
+
     return {
+        "exit_attribution": by_reason,
         "book": {
             "net_pnl": round(net, 2),
             "gross_pnl": round(gross, 2),

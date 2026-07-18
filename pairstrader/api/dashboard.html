@@ -9,16 +9,14 @@
 <style>
 :root{
   --bg:#12161C; --panel:#1A2029; --line:#2A3340; --ink:#E9E6DF; --dim:#8B94A3;
-  --long:#3FB8AF;   /* teal — long leg / positive */
-  --short:#E0A43C;  /* amber — short leg / costs */
-  --loss:#C75C5C;   /* muted red — negative */
+  --long:#3FB8AF; --short:#E0A43C; --loss:#C75C5C;
   --mono:'IBM Plex Mono',ui-monospace,monospace;
   --disp:'Space Grotesk',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
 body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5;padding:28px 32px 60px}
 header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px}
-h1{font-family:var(--disp);font-weight:700;font-size:22px;letter-spacing:.01em}
+h1{font-family:var(--disp);font-weight:700;font-size:22px}
 h1 span{color:var(--dim);font-weight:500}
 .toggle{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px}
 .toggle button{background:none;border:0;color:var(--dim);font-family:var(--mono);font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer}
@@ -28,10 +26,11 @@ h1 span{color:var(--dim);font-weight:500}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .stat .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
 .stat .v{font-family:var(--disp);font-size:21px;font-weight:700;margin-top:2px}
-.pos{color:var(--long)} .neg{color:var(--loss)}
+.pos{color:var(--long)} .neg{color:var(--loss)} .amb{color:var(--short)}
 .row{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:22px}
 @media(max-width:900px){.row{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:22px}
+.row .panel{margin-bottom:0}
 .panel h2{font-family:var(--disp);font-size:14px;font-weight:500;color:var(--dim);margin-bottom:12px}
 svg{width:100%;display:block}
 table{width:100%;border-collapse:collapse}
@@ -39,10 +38,23 @@ th{color:var(--dim);font-weight:400;font-size:11px;text-transform:uppercase;lett
 th:first-child,td:first-child{text-align:left}
 td{padding:6px 8px;text-align:right;border-bottom:1px solid #202834}
 tbody tr:hover{background:#202834}
+#pairs tbody tr{cursor:pointer}
+#pairs tbody tr.sel{background:#233042;outline:1px solid var(--long)}
 .bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin-top:3px}
 .bar i{position:absolute;top:0;bottom:0;border-radius:3px}
-.note{color:var(--dim);font-size:12px;margin-top:20px;max-width:70ch}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.chip{border:1px solid var(--line);border-radius:6px;padding:8px 12px;min-width:150px}
+.chip .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.chip .v{font-family:var(--disp);font-weight:700;font-size:16px}
+.note{color:var(--dim);font-size:12px;margin-top:20px;max-width:78ch}
+.hint{color:var(--dim);font-size:11px;margin-top:6px}
+#pairdetail{display:none}
+#pairdetail .head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+#pairdetail .head h2{margin-bottom:0}
+#pairdetail .head button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--dim);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer}
 #empty{color:var(--dim);padding:40px;text-align:center;display:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -51,7 +63,7 @@ tbody tr:hover{background:#202834}
   <div class="toggle" id="engines" role="tablist" aria-label="Signal engine"></div>
 </header>
 
-<div id="empty">No results yet — run <b>python scripts/run_demo.py</b>, then refresh.</div>
+<div id="empty">No results yet — run <b>python scripts/run_real.py</b> (or run_demo.py), then refresh.</div>
 
 <div id="app" style="display:none">
   <div class="grid" id="stats"></div>
@@ -63,9 +75,33 @@ tbody tr:hover{background:#202834}
   </div>
 
   <div class="panel">
-    <h2>Per-pair ledger</h2>
+    <h2>Where P&amp;L dies — exit attribution</h2>
+    <div class="chips" id="exits"></div>
+    <div class="hint">converged = spread closed as intended · stopped = divergence stop hit · timed_out = time stop released an unconverged trade · window_end = force-closed at window boundary</div>
+  </div>
+
+  <div class="panel">
+    <h2>Per-pair ledger <span style="color:var(--dim);font-weight:400">— click a pair for detail</span></h2>
     <table id="pairs"><thead><tr>
       <th>Pair</th><th>Trades</th><th>Win %</th><th>Gross</th><th>Costs</th><th>Net</th><th>Max DD</th><th>Sharpe</th><th>Net share</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="panel" id="pairdetail">
+    <div class="head">
+      <h2 id="pdtitle"></h2>
+      <button id="pdclose">back to book</button>
+    </div>
+    <div class="chips" id="pdchips"></div>
+    <div class="two">
+      <div><h2>Pair equity (net)</h2><svg id="pdequity" viewBox="0 0 460 200"></svg></div>
+      <div><h2>Formation-window specs</h2>
+        <table id="pdspecs"><thead><tr><th>Window</th><th>β</th><th>ADF p</th><th>Half-life</th><th>Corr</th></tr></thead><tbody></tbody></table>
+      </div>
+    </div>
+    <h2 style="margin-top:16px">Trades</h2>
+    <table id="pdtrades"><thead><tr>
+      <th>Entry</th><th>Exit</th><th>Dir</th><th>Days</th><th>Gross</th><th>Costs</th><th>Net</th><th>Exit</th>
     </tr></thead><tbody></tbody></table>
   </div>
 
@@ -74,7 +110,7 @@ tbody tr:hover{background:#202834}
 
 <script>
 const fmt = n => (n<0?'−':'') + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
-let DATA=null, engine=null;
+let DATA=null, engine=null, selPair=null;
 
 async function load(){
   const r = await fetch('/api/results');
@@ -85,6 +121,7 @@ async function load(){
   const tg = document.getElementById('engines');
   tg.innerHTML = names.map(n=>`<button role="tab" data-e="${n}">${n}</button>`).join('');
   tg.querySelectorAll('button').forEach(b=>b.onclick=()=>{engine=b.dataset.e; render();});
+  document.getElementById('pdclose').onclick=()=>{selPair=null; render();};
   document.getElementById('app').style.display='block';
   render();
 }
@@ -101,35 +138,40 @@ function render(){
     ['Max drawdown', fmt(B.max_drawdown), 'neg'],
     ['Trades', T.count+' ('+T.win_rate_pct+'% win)', ''],
     ['Median hold', T.median_holding_days+'d', ''],
-    ['Cost drag', (B.cost_share_of_gross_pct??0)+'% of gross', '']
+    ['Cost drag', B.cost_share_of_gross_pct!=null ? B.cost_share_of_gross_pct+'% of gross' : fmt(B.total_costs)+' abs', '']
   ];
   document.getElementById('stats').innerHTML = stats.map(([k,v,c])=>
     `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
 
-  drawEquity(E.equity);
+  drawLine('equity', E.equity, 720, 240);
   drawWaterfall(B);
+  drawExits(E.summary.exit_attribution||{});
   drawPairs(E.summary.per_pair, B.net_pnl);
+  renderPairDetail(E);
 
   document.getElementById('footnote').textContent =
-    `${E.windows.length} walk-forward windows · formation/trading split, hedge ratios and thresholds frozen at formation · ` +
-    `costs: fees + slippage per leg per side, plus funding drag while positions are open.`;
+    `${E.windows.length} walk-forward windows · hedge ratios and thresholds frozen at formation · ` +
+    `costs: fees + slippage per leg per side, plus funding drag while positions are open` +
+    (DATA.source ? ` · data: ${DATA.source}` : '');
 }
 
-function drawEquity(eq){
-  const svg=document.getElementById('equity');
-  const entries=Object.entries(eq); if(!entries.length){svg.innerHTML='';return;}
+function drawLine(id, eq, W, H){
+  const svg=document.getElementById(id);
+  const entries=Object.entries(eq||{}); if(!entries.length){svg.innerHTML='';return;}
   const vals=entries.map(e=>e[1]);
-  const min=Math.min(0,...vals), max=Math.max(...vals), W=720,H=240,P=34;
-  const X=i=>P+(W-2*P)*i/(vals.length-1), Y=v=>H-P-(H-2*P)*(v-min)/(max-min||1);
+  const min=Math.min(0,...vals), max=Math.max(0,...vals), P=36;
+  const X=i=>P+(W-2*P)*i/Math.max(vals.length-1,1), Y=v=>H-P-(H-2*P)*(v-min)/(max-min||1);
   let path='M'+vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' L');
   const zero=Y(0);
-  const ticks=[0,.25,.5,.75,1].map(f=>min+f*(max-min));
+  const last=vals[vals.length-1];
+  const col=last>=0?'#3FB8AF':'#C75C5C';
+  const ticks=[0,.5,1].map(f=>min+f*(max-min));
   svg.innerHTML =
-    ticks.map(t=>`<line x1="${P}" x2="${W-P}" y1="${Y(t)}" y2="${Y(t)}" stroke="#232B36" stroke-width="1"/>
+    ticks.map(t=>`<line x1="${P}" x2="${W-P}" y1="${Y(t)}" y2="${Y(t)}" stroke="#232B36"/>
       <text x="${P-6}" y="${Y(t)+4}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${fmt(t)}</text>`).join('') +
-    `<line x1="${P}" x2="${W-P}" y1="${zero}" y2="${zero}" stroke="#3A4452" stroke-width="1"/>` +
-    `<path d="${path} L${X(vals.length-1)},${zero} L${X(0)},${zero} Z" fill="#3FB8AF" opacity="0.08"/>` +
-    `<path d="${path}" fill="none" stroke="#3FB8AF" stroke-width="1.8"/>` +
+    `<line x1="${P}" x2="${W-P}" y1="${zero}" y2="${zero}" stroke="#3A4452"/>` +
+    `<path d="${path} L${X(vals.length-1)},${zero} L${X(0)},${zero} Z" fill="${col}" opacity="0.08"/>` +
+    `<path d="${path}" fill="none" stroke="${col}" stroke-width="1.8"/>` +
     `<text x="${P}" y="${H-8}" fill="#8B94A3" font-size="10" font-family="IBM Plex Mono">${entries[0][0]}</text>` +
     `<text x="${W-P}" y="${H-8}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${entries[entries.length-1][0]}</text>`;
 }
@@ -137,33 +179,84 @@ function drawEquity(eq){
 function drawWaterfall(B){
   const svg=document.getElementById('waterfall');
   const g=B.gross_pnl, c=B.total_costs, n=B.net_pnl;
-  const max=Math.max(g,1), W=340,H=240,P=30,bw=70;
-  const y=v=>H-P-(H-2*P-20)*v/max;
+  const lo=Math.min(0,g,n), hi=Math.max(0,g,1), W=340,H=240,P=30,bw=70;
+  const y=v=>H-P-(H-2*P-20)*(v-lo)/(hi-lo||1);
   const bars=[
-    {x:P, h0:0, h1:g, col:'#3FB8AF', lab:'gross', val:g},
-    {x:P+bw+35, h0:n, h1:g, col:'#E0A43C', lab:'costs', val:-c},
-    {x:P+2*(bw+35), h0:0, h1:n, col:n>=0?'#3FB8AF':'#C75C5C', lab:'net', val:n}
+    {x:P, a:0, b:g, col:g>=0?'#3FB8AF':'#C75C5C', lab:'gross', val:g},
+    {x:P+bw+35, a:n, b:g, col:'#E0A43C', lab:'costs', val:-c},
+    {x:P+2*(bw+35), a:0, b:n, col:n>=0?'#3FB8AF':'#C75C5C', lab:'net', val:n}
   ];
-  svg.innerHTML = bars.map(b=>
-    `<rect x="${b.x}" y="${y(b.h1)}" width="${bw}" height="${Math.max(y(b.h0)-y(b.h1),2)}" fill="${b.col}" opacity="${b.lab==='costs'?0.85:1}" rx="3"/>
-     <text x="${b.x+bw/2}" y="${y(b.h1)-8}" fill="#E9E6DF" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${fmt(b.val)}</text>
-     <text x="${b.x+bw/2}" y="${H-10}" fill="#8B94A3" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${b.lab}</text>`).join('');
-  document.getElementById('costnote').textContent =
-    `Costs consumed ${B.cost_share_of_gross_pct}% of gross — the viability margin lives here.`;
+  svg.innerHTML = `<line x1="${P-6}" x2="${W-P+40}" y1="${y(0)}" y2="${y(0)}" stroke="#3A4452"/>` +
+   bars.map(b=>{
+    const top=y(Math.max(b.a,b.b)), bot=y(Math.min(b.a,b.b));
+    return `<rect x="${b.x}" y="${top}" width="${bw}" height="${Math.max(bot-top,2)}" fill="${b.col}" opacity="${b.lab==='costs'?0.85:1}" rx="3"/>
+     <text x="${b.x+bw/2}" y="${top-8}" fill="#E9E6DF" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${fmt(b.val)}</text>
+     <text x="${b.x+bw/2}" y="${H-6}" fill="#8B94A3" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${b.lab}</text>`;}).join('');
+  document.getElementById('costnote').textContent = B.cost_share_of_gross_pct!=null
+    ? `Costs consumed ${B.cost_share_of_gross_pct}% of gross — the viability margin lives here.`
+    : `Gross is negative: costs (${fmt(B.total_costs)}) deepen a loss the signal already made.`;
+}
+
+function drawExits(att){
+  const order=["converged","stopped","timed_out","window_end","closed"];
+  const el=document.getElementById('exits');
+  el.innerHTML = order.filter(k=>att[k]).map(k=>{
+    const a=att[k], cls=a.net_pnl>=0?'pos':'neg';
+    return `<div class="chip"><div class="k">${k.replace('_',' ')}</div>
+      <div class="v ${cls}">${fmt(a.net_pnl)}</div>
+      <div class="hint">${a.count} trades · avg ${a.avg_holding_days}d held</div></div>`;
+  }).join('') || '<span class="hint">no trades</span>';
 }
 
 function drawPairs(pairs, bookNet){
   const tb=document.querySelector('#pairs tbody');
   tb.innerHTML = pairs.map(p=>{
-    const share = bookNet>0 ? Math.max(0,100*p.net_pnl/bookNet) : 0;
-    return `<tr>
+    const denom = Math.max(...pairs.map(q=>Math.abs(q.net_pnl)),1);
+    const share = 100*Math.abs(p.net_pnl)/denom;
+    return `<tr data-pair="${p.pair}" class="${p.pair===selPair?'sel':''}">
       <td>${p.pair}</td><td>${p.trades}</td><td>${p.win_rate}</td>
-      <td>${fmt(p.gross_pnl)}</td><td style="color:var(--short)">${fmt(p.costs)}</td>
+      <td>${fmt(p.gross_pnl)}</td><td class="amb">${fmt(p.costs)}</td>
       <td class="${p.net_pnl>=0?'pos':'neg'}">${fmt(p.net_pnl)}</td>
       <td class="neg">${fmt(p.max_dd)}</td><td>${p.sharpe.toFixed(2)}</td>
-      <td style="width:120px"><div class="bar"><i style="left:0;width:${Math.min(share,100)}%;background:var(--long)"></i></div></td>
+      <td style="width:120px"><div class="bar"><i style="left:0;width:${share}%;background:${p.net_pnl>=0?'var(--long)':'var(--loss)'}"></i></div></td>
     </tr>`;
   }).join('');
+  tb.querySelectorAll('tr').forEach(r=>r.onclick=()=>{selPair=r.dataset.pair; render();
+    document.getElementById('pairdetail').scrollIntoView({behavior:'smooth'});});
+}
+
+function renderPairDetail(E){
+  const box=document.getElementById('pairdetail');
+  if(!selPair){ box.style.display='none'; return; }
+  box.style.display='block';
+  document.getElementById('pdtitle').textContent=selPair;
+
+  const trades=E.trades.filter(t=>t.pair===selPair);
+  const specs=E.pair_specs.filter(s=>s.pair===selPair);
+  const eq=(E.pair_equity||{})[selPair]||{};
+  const net=trades.reduce((a,t)=>a+t.net_pnl,0);
+  const wins=trades.filter(t=>t.net_pnl>0).length;
+  const conv=trades.filter(t=>t.exit_reason==='converged').length;
+
+  document.getElementById('pdchips').innerHTML=[
+    ['Net P&L',fmt(net),net>=0?'pos':'neg'],
+    ['Trades',trades.length,''],
+    ['Win rate',trades.length?Math.round(100*wins/trades.length)+'%':'—',''],
+    ['Converged exits',trades.length?conv+' / '+trades.length:'—',''],
+    ['Windows selected',specs.length,''],
+  ].map(([k,v,c])=>`<div class="chip"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+
+  drawLine('pdequity', eq, 460, 200);
+
+  document.querySelector('#pdspecs tbody').innerHTML=specs.map(s=>
+    `<tr><td>${s.window_start}</td><td>${s.beta.toFixed(3)}</td><td>${s.adf_pvalue.toFixed(4)}</td>
+     <td>${s.half_life_days.toFixed(1)}d</td><td>${s.correlation.toFixed(3)}</td></tr>`).join('');
+
+  document.querySelector('#pdtrades tbody').innerHTML=trades.map(t=>
+    `<tr><td>${t.entry_time}</td><td>${t.exit_time}</td>
+     <td>${t.direction>0?'long':'short'} spread</td><td>${t.holding_days}</td>
+     <td>${fmt(t.gross_pnl)}</td><td class="amb">${fmt(t.costs)}</td>
+     <td class="${t.net_pnl>=0?'pos':'neg'}">${fmt(t.net_pnl)}</td><td>${t.exit_reason}</td></tr>`).join('');
 }
 
 load();

@@ -28,10 +28,17 @@ class SignalEngine:
 def _band_positions(z: pd.Series, entry: float, exit_: float, stop: float,
                     max_holding: int) -> pd.Series:
     """Stateful band logic shared by both engines: entry at +/-entry,
-    exit at |z|<=exit_, hard stop at |z|>=stop, time stop at max_holding."""
+    exit at |z|<=exit_, hard stop at |z|>=stop, time stop at max_holding.
+
+    The returned Series carries `attrs["exit_reasons"]`, a {bar_index: reason}
+    dict with reason in {"converged", "stopped", "timed_out"} for every bar
+    on which a position was closed, so the ledger can attribute P&L by exit
+    type (the platform's key diagnostic).
+    """
     pos = np.zeros(len(z))
     held = 0
     stopped_side = 0  # after a stop, wait for reversion before re-entering same side
+    reasons: dict[int, str] = {}
     zv = z.values
     for t in range(1, len(zv)):
         prev = pos[t - 1]
@@ -55,8 +62,12 @@ def _band_positions(z: pd.Series, entry: float, exit_: float, stop: float,
             if converged or stopped or timed_out:
                 stopped_side = int(prev) if stopped else 0
                 cur = 0.0
+                reasons[t] = ("stopped" if stopped else
+                              "converged" if converged else "timed_out")
         pos[t] = cur
-    return pd.Series(pos, index=z.index)
+    out = pd.Series(pos, index=z.index)
+    out.attrs["exit_reasons"] = reasons
+    return out
 
 
 class ZScoreEngine(SignalEngine):
