@@ -22,6 +22,11 @@ uvicorn pairstrader.api.server:app --reload      # dashboard at http://127.0.0.1
 
 Real data: point `CSVDataSource` at a wide CSV (timestamp, one close column per symbol), or implement `DataSource.get_prices()` over an exchange client.
 
+### macOS setup gotchas
+
+- If `python scripts/run_demo.py` fails with `ModuleNotFoundError` despite `pip list` showing the package installed, your shell likely has `python` aliased to the system interpreter, which shadows an activated venv. Invoke the venv's interpreter directly (e.g. `.venvpairs/bin/python scripts/run_real.py`) or fix the alias.
+- If `run_real.py` fails with `SSL: CERTIFICATE_VERIFY_FAILED` while fetching Coin Metrics/Binance data, your Python was installed via the python.org macOS installer, which ships an unpopulated CA bundle. Run `/Applications/Python\ 3.x/Install\ Certificates.command` once to fix it for that interpreter.
+
 ## Design decisions (and why)
 
 - Hedge ratio, z-score seed, and OU parameters are frozen at formation-window end — the trading window is genuinely out-of-sample
