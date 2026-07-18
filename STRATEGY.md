@@ -101,6 +101,48 @@ The filter was implemented as specified in §8 and run once. Two candid findings
 
 **Outcome:** the filter shrinks the book from 6.9 to 1.3 pairs/window (189 → 9 trades). Absolute losses fall ~95% (z-score net −47k → −2.6k) and per-trade break losses shrink (the trading-time β-kill cuts broken pairs at ≈ −430/trade vs ≈ −1,100/trade for the baseline's 3.5σ stops), but Sharpe stays negative. Even 3-segment-stable pairs mostly broke out-of-sample (β-break was the modal exit). Interpretation: among these 15 majors at daily bars, 2022–2026, cross-asset cointegration is not stable enough to trade with distance/cointegration tools — consistent with the post-2009 decay literature. The platform's verdict machinery worked; the universe/frequency is the problem. Sanctioned next directions: economically-linked pairs (wrapped/staked variants via Binance data), intraday bars, funding-rate P&L, and the copula engine — each changes the information set, not the thresholds.
 
+## 8c. Economically-linked pairs (Binance)
+
+§8b's first sanctioned direction — assets with a *structural* reason to stay tied
+together, not just historical correlation — was tried next, against the two such
+pairs that actually exist on Binance spot with klines history: **WBTC/BTC** (wrapped
+Bitcoin vs. Bitcoin) and **WBETH/ETH** (Binance's own liquid-staking wrapper vs.
+Ethereum). No stETH/wstETH/cbETH/weETH/rETH markets exist on Binance spot — checked
+against the live `exchangeInfo` endpoint, not assumed. WBETH only launched
+2023-07-19, so the common-history window across all four symbols (`BTC`, `WBTC`,
+`ETH`, `WBETH`) is short: 9 walk-forward windows vs. the majors' 14. `discover_pairs`
+was left unrestricted — free to consider all 6 pairwise combinations among the four
+symbols, not just the two intended structural ones — run once, no threshold changes.
+
+**Outcome: worse than the majors baseline, not better** (z-score net −7.2k, Sharpe
+−1.62; OU net −6.1k, Sharpe −1.92) — but the per-pair breakdown shows two distinct,
+more informative failure modes than a single "it didn't work" verdict:
+
+- **BTC/WBTC**, the one genuinely clean structural pair, had *gross P&L slightly
+  positive* (+140 z-score / +131 OU across 13 trades) — the mean-reversion signal is
+  real. Costs (−857 / −906) erased it entirely. At ~32bp round-trip cost, a basis this
+  tight isn't a retail-cost-assumption strategy; it needs maker rebates, larger size to
+  amortize fixed costs, or a venue with a tighter fee schedule to be viable at all.
+- **The cross-pairs** the unrestricted search also picked up (WBTC/ETH, BTC/WBETH,
+  BTC/ETH, WBTC/WBETH — a wrapped form of one asset against the *unwrapped* form of
+  the *other*) have no structural link whatsoever, and lost on **gross** P&L too
+  (−1,020 to −1,854 per pair) — behaving exactly like the majors' spurious-correlation
+  problem, and dragging the aggregate down alongside the cost-bound BTC/WBTC losses.
+- **ETH/WBETH**, the second intended structural pair, generated **zero trades** — it
+  never qualified in a full-length window given the short history. Inconclusive, not
+  negative.
+
+Interpretation: the "economically-linked" hypothesis isn't refuted by this result —
+the experiment as run didn't isolate it cleanly. A fairer test restricts the candidate
+set to the intended structural pairs only (skip `discover_pairs`'s free combinatorial
+search over a 4-symbol universe, since half the combinations it can find are exactly
+the coincidental-correlation problem this direction was meant to avoid), and treats
+the cost model as a variable to examine, not just the selection logic — a real edge
+that costs erase is a different finding than a real edge that doesn't exist. Neither
+of those is threshold tuning on entry/exit/stop values, so both stay within what's
+sanctioned; both are unimplemented, run-once verdicts for a future session, not this
+one's.
+
 ## 9. Parameter reference
 
 Every economically meaningful number lives in `pairstrader/config.py`: costs (`CostConfig`), selection filters (`DiscoveryConfig`), signal thresholds (`SignalConfig`), window sizes and capital (`BacktestConfig`). If a behavior of the platform surprises you, the explanation is in this document or in that one file.
