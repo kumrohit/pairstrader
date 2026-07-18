@@ -18,6 +18,7 @@ import pandas as pd
 
 from pairstrader.config import PlatformConfig
 from pairstrader.discovery.pairs import PairSpec, discover_pairs, spread_series
+from pairstrader.portfolio.risk import beta_drift_kill
 from pairstrader.signals.engines import SignalEngine
 
 
@@ -137,10 +138,13 @@ def run_backtest(prices: pd.DataFrame, cfg: PlatformConfig,
             f_spread = spread_series(form[spec.y], form[spec.x], spec.alpha, spec.beta)
             t_spread = spread_series(trade_px[spec.y], trade_px[spec.x], spec.alpha, spec.beta)
             pos = engine.positions(t_spread, f_spread)
+            if cfg.risk.beta_kill_enabled:
+                pos = beta_drift_kill(pos, form, trade_px, spec, cfg.risk)
             window_pnl[spec.name] = _pair_window_pnl(trade_px, spec, pos, cfg,
                                                      engine.name, trades)
             all_specs.append({
                 "pair": spec.name, "beta": round(spec.beta, 3),
+                "beta_drift": None if spec.beta_drift != spec.beta_drift else round(spec.beta_drift, 3),
                 "adf_pvalue": round(spec.adf_pvalue, 4),
                 "half_life_days": round(spec.half_life_days, 1),
                 "correlation": round(spec.correlation, 3),

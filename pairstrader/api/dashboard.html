@@ -77,7 +77,7 @@ tbody tr:hover{background:#202834}
   <div class="panel">
     <h2>Where P&amp;L dies — exit attribution</h2>
     <div class="chips" id="exits"></div>
-    <div class="hint">converged = spread closed as intended · stopped = divergence stop hit · timed_out = time stop released an unconverged trade · window_end = force-closed at window boundary</div>
+    <div class="hint">converged = spread closed as intended · stopped = divergence stop hit · timed_out = time stop released an unconverged trade · beta_break = hedge ratio drifted, relationship presumed broken · window_end = force-closed at window boundary</div>
   </div>
 
   <div class="panel">
@@ -198,7 +198,7 @@ function drawWaterfall(B){
 }
 
 function drawExits(att){
-  const order=["converged","stopped","timed_out","window_end","closed"];
+  const order=["converged","stopped","timed_out","beta_break","window_end","closed"];
   const el=document.getElementById('exits');
   el.innerHTML = order.filter(k=>att[k]).map(k=>{
     const a=att[k], cls=a.net_pnl>=0?'pos':'neg';

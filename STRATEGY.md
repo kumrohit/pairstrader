@@ -93,6 +93,14 @@ Book- and pair-level: net/gross P&L, cost share of gross, annualized Sharpe and 
 
 What is *not* sanctioned: re-fitting entry/exit/stop thresholds on this same 2022–2026 sample until the total turns positive. With 6 free parameters and one sample, that is curve fitting, and the walk-forward design exists precisely to keep us honest about it. When a selection improvement is implemented, the verdict comes from the untouched holdout convention: freeze the change, run once, read the number.
 
+## 8b. Stability filter results (SPEC-002)
+
+The filter was implemented as specified in §8 and run once. Two candid findings:
+
+**Design revision, disclosed:** v1 demanded a significant ADF test on each formation sub-window; with ~120 observations ADF is so underpowered that zero pairs passed in any window — degenerate by inspection, before any P&L was read. v2 keeps ADF at the full window and requires per-segment *estimator stability* instead (mean reversion present with half-life ≤ 45d per segment, β-drift ≤ 25%). Parameters were fixed before the run; the run was performed once.
+
+**Outcome:** the filter shrinks the book from 6.9 to 1.3 pairs/window (189 → 9 trades). Absolute losses fall ~95% (z-score net −47k → −2.6k) and per-trade break losses shrink (the trading-time β-kill cuts broken pairs at ≈ −430/trade vs ≈ −1,100/trade for the baseline's 3.5σ stops), but Sharpe stays negative. Even 3-segment-stable pairs mostly broke out-of-sample (β-break was the modal exit). Interpretation: among these 15 majors at daily bars, 2022–2026, cross-asset cointegration is not stable enough to trade with distance/cointegration tools — consistent with the post-2009 decay literature. The platform's verdict machinery worked; the universe/frequency is the problem. Sanctioned next directions: economically-linked pairs (wrapped/staked variants via Binance data), intraday bars, funding-rate P&L, and the copula engine — each changes the information set, not the thresholds.
+
 ## 9. Parameter reference
 
 Every economically meaningful number lives in `pairstrader/config.py`: costs (`CostConfig`), selection filters (`DiscoveryConfig`), signal thresholds (`SignalConfig`), window sizes and capital (`BacktestConfig`). If a behavior of the platform surprises you, the explanation is in this document or in that one file.

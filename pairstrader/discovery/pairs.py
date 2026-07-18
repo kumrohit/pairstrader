@@ -28,6 +28,7 @@ class PairSpec:
     adf_pvalue: float
     half_life_days: float
     correlation: float
+    beta_drift: float = float("nan")  # max sub-window beta deviation (stability check)
 
     @property
     def name(self) -> str:
@@ -55,6 +56,38 @@ def half_life(spread: pd.Series) -> float:
     return float(-np.log(2.0) / np.log(1.0 + b))
 
 
+def stability_check(y: pd.Series, x: pd.Series, alpha: float, beta: float,
+                    cfg: DiscoveryConfig) -> tuple[bool, float]:
+    """Require the formation relationship to hold on each of K sub-windows.
+
+    Design note: v1 of this check demanded a significant ADF test on every
+    segment; with ~120 observations per segment ADF is so underpowered that
+    the filter selected zero pairs in every window (degenerate). The check
+    therefore keeps hypothesis testing at the full window (where ADF has
+    power) and requires *estimator stability* per segment instead:
+      (a) each segment's spread shows mean reversion: AR(1) slope < 0 with
+          segment half-life <= stability_half_life_max_days, and
+      (b) the segment-estimated hedge ratio stays within
+          stability_beta_drift_max of the full-window beta.
+    Returns (passed, max_beta_drift). Targets the failure mode measured in
+    the baseline run: pairs that look cointegrated over a year on the
+    strength of one strong sub-period, then break out-of-sample.
+    """
+    n, k = len(y), cfg.stability_subwindows
+    drifts: list[float] = []
+    for i in range(k):
+        sl = slice(i * n // k, (i + 1) * n // k)
+        seg_y, seg_x = y.iloc[sl], x.iloc[sl]
+        spr = spread_series(seg_y, seg_x, alpha, beta)
+        hl = half_life(spr)
+        if not (hl > 0 and hl <= cfg.stability_half_life_max_days):
+            return False, float("nan")
+        _, b_seg = hedge_ratio(seg_y, seg_x)
+        drifts.append(abs(b_seg / beta - 1.0))
+    max_drift = max(drifts)
+    return max_drift <= cfg.stability_beta_drift_max, max_drift
+
+
 def discover_pairs(prices: pd.DataFrame, cfg: DiscoveryConfig) -> list[PairSpec]:
     logp = np.log(prices.dropna(axis=1))
     corr = logp.corr()
@@ -77,8 +110,14 @@ def discover_pairs(prices: pd.DataFrame, cfg: DiscoveryConfig) -> list[PairSpec]
         hl = half_life(spr)
         if not (cfg.half_life_min_days <= hl <= cfg.half_life_max_days):
             continue
+        drift = float("nan")
+        if cfg.require_stability:
+            ok, drift = stability_check(prices[a], prices[b], alpha, beta, cfg)
+            if not ok:
+                continue
         found.append(PairSpec(y=a, x=b, beta=beta, alpha=alpha,
-                              adf_pvalue=pval, half_life_days=hl, correlation=float(c)))
+                              adf_pvalue=pval, half_life_days=hl,
+                              correlation=float(c), beta_drift=drift))
 
     found.sort(key=lambda p: p.adf_pvalue)
     return found[: cfg.max_pairs]

@@ -28,6 +28,21 @@ class DiscoveryConfig:
     half_life_min_days: float = 1.0   # too fast = microstructure noise
     half_life_max_days: float = 30.0  # too slow = capital tied up, break risk
     max_pairs: int = 10               # book size cap
+    # Stability requirement: the relationship must hold on formation
+    # sub-windows, not just the full window. Parameters fixed a priori
+    # (literature-standard), not tuned on our sample.
+    require_stability: bool = False
+    stability_subwindows: int = 3     # split formation into K segments
+    stability_half_life_max_days: float = 45.0  # per-segment mean reversion must exist
+    stability_beta_drift_max: float = 0.25  # max |beta_seg/beta_full - 1|
+
+
+@dataclass
+class RiskConfig:
+    """Trading-window risk overlays."""
+    beta_kill_enabled: bool = False
+    beta_kill_window: int = 60        # bars for rolling beta re-estimate
+    beta_kill_tol: float = 0.30       # kill pair if |beta_t/beta_form - 1| exceeds
 
 
 @dataclass
@@ -55,3 +70,4 @@ class PlatformConfig:
     discovery: DiscoveryConfig = field(default_factory=DiscoveryConfig)
     signal: SignalConfig = field(default_factory=SignalConfig)
     backtest: BacktestConfig = field(default_factory=BacktestConfig)
+    risk: RiskConfig = field(default_factory=RiskConfig)
