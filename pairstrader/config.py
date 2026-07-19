@@ -20,6 +20,26 @@ class CostConfig:
         return self.taker_fee_bps + self.slippage_bps
 
 
+def india_cash_futures_costs() -> CostConfig:
+    """Cost preset for the structure feasible at ~Rs.15L capital:
+    LONG leg in cash delivery, SHORT leg via single-stock futures.
+
+    Per-side, per-leg derivation (bps of notional):
+      cash delivery leg: STT 10 (0.1% each side) + exchange ~0.3 + stamp/GST
+        ~0.8 blended + slippage 5                          ~ 16 bps
+      futures leg: STT 2 (sell side, blended ~1) + exchange ~0.2 + stamp
+        ~0.1 + flat brokerage ~0.3 + slippage 5            ~  7 bps
+      blended across the two legs                          ~ 11.5 bps
+    -> taker_fee_bps = 6.5 (frictions) + slippage_bps = 5.
+
+    funding_annual_pct repurposed as futures ROLL drag: ~5bp per monthly
+    roll x 12 on the short leg only = 0.6%/yr on one leg; the engine
+    applies it to 2x notional, so 0.3 here. Statutory rates move (STT on
+    futures changed Oct 2024); revisit against the current schedule.
+    """
+    return CostConfig(taker_fee_bps=6.5, slippage_bps=5.0, funding_annual_pct=0.3)
+
+
 @dataclass
 class DiscoveryConfig:
     """Pair discovery filters, applied on the formation window."""

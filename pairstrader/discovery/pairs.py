@@ -88,12 +88,19 @@ def stability_check(y: pd.Series, x: pd.Series, alpha: float, beta: float,
     return max_drift <= cfg.stability_beta_drift_max, max_drift
 
 
-def discover_pairs(prices: pd.DataFrame, cfg: DiscoveryConfig) -> list[PairSpec]:
+def discover_pairs(prices: pd.DataFrame, cfg: DiscoveryConfig,
+                   sector_map: dict[str, str] | None = None) -> list[PairSpec]:
+    """If sector_map is given, only same-sector pairs are considered —
+    the strongest documented selection improvement (Do & Faff's refined
+    industry groups), and it slashes the multiple-testing burden of the
+    combinatorial search."""
     logp = np.log(prices.dropna(axis=1))
     corr = logp.corr()
     found: list[PairSpec] = []
 
     for a, b in combinations(logp.columns, 2):
+        if sector_map is not None and sector_map.get(a) != sector_map.get(b):
+            continue
         c = corr.loc[a, b]
         if c < cfg.min_correlation:
             continue

@@ -11,22 +11,22 @@ import pandas as pd
 
 from pairstrader.backtest.engine import BacktestResult
 
-BARS_PER_YEAR = 365  # crypto trades every day
+BARS_PER_YEAR = 365  # default: crypto trades every day; equities pass 252
 
 
-def _sharpe(pnl: pd.Series, capital: float) -> float:
+def _sharpe(pnl: pd.Series, capital: float, bars_per_year: int = BARS_PER_YEAR) -> float:
     r = pnl / capital
     if r.std(ddof=1) == 0 or len(r) < 20:
         return 0.0
-    return float(r.mean() / r.std(ddof=1) * np.sqrt(BARS_PER_YEAR))
+    return float(r.mean() / r.std(ddof=1) * np.sqrt(bars_per_year))
 
 
-def _sortino(pnl: pd.Series, capital: float) -> float:
+def _sortino(pnl: pd.Series, capital: float, bars_per_year: int = BARS_PER_YEAR) -> float:
     r = pnl / capital
     downside = r[r < 0]
     if len(downside) < 5 or downside.std(ddof=1) == 0:
         return 0.0
-    return float(r.mean() / downside.std(ddof=1) * np.sqrt(BARS_PER_YEAR))
+    return float(r.mean() / downside.std(ddof=1) * np.sqrt(bars_per_year))
 
 
 def _max_drawdown(equity: pd.Series) -> float:
@@ -36,7 +36,8 @@ def _max_drawdown(equity: pd.Series) -> float:
     return float((equity - peak).min())
 
 
-def summarize(result: BacktestResult, capital_deployed: float) -> dict:
+def summarize(result: BacktestResult, capital_deployed: float,
+              bars_per_year: int = BARS_PER_YEAR) -> dict:
     trades = result.trades
     n_trades = len(trades)
     gross = sum(t.gross_pnl for t in trades)
@@ -59,7 +60,7 @@ def summarize(result: BacktestResult, capital_deployed: float) -> dict:
                 "trades": len(p_trades),
                 "win_rate": round(100 * len([t for t in p_trades if t.net_pnl > 0]) / max(len(p_trades), 1), 1),
                 "max_dd": round(_max_drawdown(p.cumsum()), 2),
-                "sharpe": round(_sharpe(p, capital_deployed), 2),
+                "sharpe": round(_sharpe(p, capital_deployed, bars_per_year), 2),
             })
         per_pair.sort(key=lambda d: -d["net_pnl"])
 
@@ -81,8 +82,8 @@ def summarize(result: BacktestResult, capital_deployed: float) -> dict:
             "gross_pnl": round(gross, 2),
             "total_costs": round(costs, 2),
             "cost_share_of_gross_pct": round(100 * costs / gross, 1) if gross > 0 else None,
-            "sharpe": round(_sharpe(book_pnl, capital_deployed), 2),
-            "sortino": round(_sortino(book_pnl, capital_deployed), 2),
+            "sharpe": round(_sharpe(book_pnl, capital_deployed, bars_per_year), 2),
+            "sortino": round(_sortino(book_pnl, capital_deployed, bars_per_year), 2),
             "max_drawdown": round(_max_drawdown(result.equity), 2),
             "return_on_capital_pct": round(100 * net / capital_deployed, 2),
             "capital_deployed": capital_deployed,

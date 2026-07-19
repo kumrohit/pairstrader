@@ -143,6 +143,38 @@ of those is threshold tuning on entry/exit/stop values, so both stay within what
 sanctioned; both are unimplemented, run-once verdicts for a future session, not this
 one's.
 
+## 8d. NSE equities port (SPEC-003) — first positive result, with one caveat
+
+Following the cross-country evidence (EM markets + many eligible pairs + short-sale
+constraints preserving the anomaly), the platform was pointed at NSE equities:
+60 liquid F&O names in 10 static sector groups, same-sector pairs only, real
+split/bonus-adjusted EOD data (eod2_data mirror), 2019–2026, 250/63 trading-day
+windows, India cash-long/futures-short cost preset (~46bp round trip + roll drag),
+Rs.15L capital as 5 x 3L pair slots, Sharpe at 252 days. Run once per config.
+
+**Outcome:** baseline z-score net +5.44L (Sharpe 0.75, maxDD −1.33L, 206 trades,
+77% win); OU net +6.44L (Sharpe 0.91). Attribution inverts the crypto picture:
+convergence exits earned +12.9L vs −6.7L across all failure exits (z-score) —
+the relationship-persistence assumption that failed in crypto majors largely
+holds within NSE sectors. Annualized this is ~4–6% on capital: squarely the
+"modest net edge" the literature promised, not a get-rich strategy. Notably the
+stability filter *hurts* here (+1.4L / +0.5L): on a universe where relationships
+do persist, its trade-count cost exceeds its break-protection benefit —
+evidence the filter is a crypto-regime tool, not a universal improvement.
+
+**The caveat that blocks a "go live" verdict: survivorship bias.** The universe
+is today's liquid F&O names projected back to 2019 — firms that survived intact
+(the loader even dropped LTIM and TATAMOTORS for post-merger/demerger history
+breaks, making the survivor selection explicit). Pairs among survivors overstate
+convergence: the book never contained a Yes-Bank-style blowup leg. The result is
+a *conditional* finding — pairs trading works on stocks that survived — and the
+unconditional version requires a point-in-time F&O eligibility list (SPEC-004
+candidate). Direction of bias: returns overstated, unknown magnitude. Secondary
+caveats: static sector map (mild look-ahead), dividends on the cash leg not
+modeled (conservative, partially offsetting), futures lot granularity not
+enforced (leg notionals printed for manual verification against the current
+NSE lot-size schedule).
+
 ## 9. Parameter reference
 
 Every economically meaningful number lives in `pairstrader/config.py`: costs (`CostConfig`), selection filters (`DiscoveryConfig`), signal thresholds (`SignalConfig`), window sizes and capital (`BacktestConfig`). If a behavior of the platform surprises you, the explanation is in this document or in that one file.

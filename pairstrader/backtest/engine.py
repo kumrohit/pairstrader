@@ -111,7 +111,8 @@ def _pair_window_pnl(prices: pd.DataFrame, spec: PairSpec, pos: pd.Series,
 
 
 def run_backtest(prices: pd.DataFrame, cfg: PlatformConfig,
-                 engine: SignalEngine) -> BacktestResult:
+                 engine: SignalEngine,
+                 sector_map: dict[str, str] | None = None) -> BacktestResult:
     bt = cfg.backtest
     n = len(prices)
     trades: list[Trade] = []
@@ -126,7 +127,7 @@ def run_backtest(prices: pd.DataFrame, cfg: PlatformConfig,
         form = prices.iloc[start:f_end]
         trade_px = prices.iloc[f_end:t_end]
 
-        specs = discover_pairs(form, cfg.discovery)
+        specs = discover_pairs(form, cfg.discovery, sector_map=sector_map)
         windows.append({
             "formation_start": str(form.index[0].date()),
             "trading_start": str(trade_px.index[0].date()),
