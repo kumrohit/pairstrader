@@ -112,7 +112,11 @@ def _pair_window_pnl(prices: pd.DataFrame, spec: PairSpec, pos: pd.Series,
 
 def run_backtest(prices: pd.DataFrame, cfg: PlatformConfig,
                  engine: SignalEngine,
-                 sector_map: dict[str, str] | None = None) -> BacktestResult:
+                 sector_map: dict[str, str] | None = None,
+                 eligibility_fn=None) -> BacktestResult:
+    """eligibility_fn(formation_prices) -> list[str], evaluated fresh each
+    window using ONLY formation-window information (point-in-time universe).
+    None = all columns eligible (original behavior)."""
     bt = cfg.backtest
     n = len(prices)
     trades: list[Trade] = []
@@ -127,6 +131,9 @@ def run_backtest(prices: pd.DataFrame, cfg: PlatformConfig,
         form = prices.iloc[start:f_end]
         trade_px = prices.iloc[f_end:t_end]
 
+        if eligibility_fn is not None:
+            eligible = eligibility_fn(form)
+            form = form[eligible]
         specs = discover_pairs(form, cfg.discovery, sector_map=sector_map)
         windows.append({
             "formation_start": str(form.index[0].date()),

@@ -30,12 +30,17 @@ class NSEEodSource(DataSource):
 
     def __init__(self, symbols: list[str], start: str = "2019-01-01",
                  end: str | None = None, cache_dir: str = ".data_cache",
-                 min_coverage: float = 0.95):
+                 min_coverage: float = 0.95, align: str = "strict"):
+        """align="strict": drop thin symbols and any row with a gap (survivor
+        panel, original behavior). align="ragged": keep everything, NaNs and
+        all — required for point-in-time universes that include names which
+        crash, thin out, or stop trading mid-sample."""
         self.symbols = symbols
         self.start, self.end = start, end
         self.cache = Path(cache_dir)
         self.cache.mkdir(exist_ok=True)
         self.min_coverage = min_coverage
+        self.align = align
 
     def _one(self, symbol: str) -> pd.Series | None:
         safe = symbol.lower().replace("/", "-")
@@ -53,17 +58,21 @@ class NSEEodSource(DataSource):
                 return None
             cached.write_bytes(raw)
         df = pd.read_csv(io.BytesIO(raw), parse_dates=["Date"],
-                         usecols=["Date", "Close"])
-        s = df.set_index("Date")["Close"].astype(float)
-        s = s[~s.index.duplicated(keep="last")].sort_index()
+                         usecols=["Date", "Close", "Volume"])
+        df = df[~df["Date"].duplicated(keep="last")].set_index("Date").sort_index()
+        s = df["Close"].astype(float)
         s.name = symbol
+        self._volumes[symbol] = df["Volume"].astype(float)
         return s
 
     def get_prices(self) -> pd.DataFrame:
+        self._volumes: dict[str, pd.Series] = {}
         series = [x for x in (self._one(sym) for sym in self.symbols) if x is not None]
         df = pd.concat(series, axis=1).sort_index()
         df.index = df.index.tz_localize("UTC")
         df = df.loc[self.start: self.end]
+        if self.align == "ragged":
+            return df
         coverage = df.notna().mean()
         thin = coverage[coverage < self.min_coverage]
         if len(thin):
@@ -71,3 +80,9 @@ class NSEEodSource(DataSource):
                   f"{', '.join(f'{a} ({c:.0%})' for a, c in thin.items())}")
             df = df[coverage[coverage >= self.min_coverage].index]
         return df.dropna(how="any")
+
+    def get_volumes(self) -> pd.DataFrame:
+        """Volumes aligned to the last get_prices() call (call that first)."""
+        df = pd.concat(self._volumes, axis=1).sort_index()
+        df.index = df.index.tz_localize("UTC")
+        return df.loc[self.start: self.end]

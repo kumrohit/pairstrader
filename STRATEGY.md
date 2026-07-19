@@ -175,6 +175,34 @@ modeled (conservative, partially offsetting), futures lot granularity not
 enforced (leg notionals printed for manual verification against the current
 NSE lot-size schedule).
 
+## 8e. Point-in-time universe correction (SPEC-005) — the honest number
+
+The survivor universe was replaced with point-in-time selection: 76 ragged-
+history candidates including still-listed casualties (YESBANK, RCOM, IDEA,
+ZEEL, SUZLON, RPOWER, JPASSOCIAT, UNITECH, ADANIPOWER, PCJEWELLER, COFFEEDAY)
+across 13 sectors; per window, eligibility = >=95% formation coverage + top-6
+per sector by formation-window median traded value. Formation-time information
+only. Same capital, costs, windows as SPEC-003. Run once.
+
+**Outcome — roughly half the survivor-run profit was survivorship:**
+z-score net falls +5.44L -> +2.67L, Sharpe 0.75 -> 0.25, and max drawdown
+explodes −1.33L -> −5.10L (a third of the Rs.15L capital); OU +6.44L -> +4.48L,
+Sharpe 0.91 -> 0.44. Both stability variants flip negative. The book demonstrably
+held collapsing legs this time: AXISBANK/YESBANK, IDEA/RCOM, DLF/UNITECH and the
+SUZLON/RPOWER complex all traded. Verdict: at Rs.15L retail cost assumptions,
+unconditional daily-bar sector pairs on NSE is marginally net-positive at best,
+with drawdown risk out of proportion to the edge — not investable as it stands.
+
+**Two disclosed limitations of the correction itself:** (1) it is a lower bound —
+fully delisted/merged names (DHFL, Jet Airways, HDFC Ltd, Mindtree/LTI, Shriram
+Transport) are pruned from the upstream mirror and remain missing, so the true
+unconditional result is likely somewhat worse; (2) it may partially overstate
+the damage — the three added sectors are small (3–5 members), so top-6-per-sector
+admits every member including penny-stage names a real F&O-eligibility screen
+(which carries liquidity floors) would exclude. A traded-value floor is the
+principled refinement, flagged for a future run-once — not applied retroactively
+to this result.
+
 ## 9. Parameter reference
 
 Every economically meaningful number lives in `pairstrader/config.py`: costs (`CostConfig`), selection filters (`DiscoveryConfig`), signal thresholds (`SignalConfig`), window sizes and capital (`BacktestConfig`). If a behavior of the platform surprises you, the explanation is in this document or in that one file.
