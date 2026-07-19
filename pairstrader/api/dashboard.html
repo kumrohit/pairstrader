@@ -14,95 +14,112 @@
   --disp:'Space Grotesk',system-ui,sans-serif;
 }
 *{box-sizing:border-box;margin:0}
-body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5;padding:28px 32px 60px}
-header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+body{background:var(--bg);color:var(--ink);font-family:var(--mono);font-size:13px;line-height:1.5;padding:24px 32px 60px}
+header{display:flex;align-items:baseline;justify-content:space-between;border-bottom:1px solid var(--line);padding-bottom:12px;margin-bottom:14px;flex-wrap:wrap;gap:10px}
 h1{font-family:var(--disp);font-weight:700;font-size:22px}
 h1 span{color:var(--dim);font-weight:500}
-.toggle{display:flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:2px}
-.toggle button{background:none;border:0;color:var(--dim);font-family:var(--mono);font-size:12px;padding:5px 14px;border-radius:4px;cursor:pointer}
-.toggle button:focus-visible{outline:2px solid var(--long)}
-.toggle button.on{background:var(--line);color:var(--ink)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:22px}
+nav{display:flex;gap:2px}
+nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);font-family:var(--disp);font-size:14px;padding:6px 14px;cursor:pointer}
+nav button.on{color:var(--ink);border-bottom-color:var(--long)}
+.filters{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:10px 14px;margin-bottom:18px}
+.filters label{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.07em}
+.filters select{background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:5px;font-family:var(--mono);font-size:12px;padding:5px 8px;max-width:280px}
+.filters .reset{background:none;border:1px solid var(--line);border-radius:5px;color:var(--dim);font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer;margin-left:auto}
+.scope{color:var(--dim);font-size:11px;margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(148px,1fr));gap:12px;margin-bottom:20px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .stat .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.08em}
-.stat .v{font-family:var(--disp);font-size:21px;font-weight:700;margin-top:2px}
+.stat .v{font-family:var(--disp);font-size:20px;font-weight:700;margin-top:2px}
 .pos{color:var(--long)} .neg{color:var(--loss)} .amb{color:var(--short)}
-.row{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:22px}
+.row{display:grid;grid-template-columns:1.6fr 1fr;gap:14px;margin-bottom:20px}
 @media(max-width:900px){.row{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:22px}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:20px}
 .row .panel{margin-bottom:0}
 .panel h2{font-family:var(--disp);font-size:14px;font-weight:500;color:var(--dim);margin-bottom:12px}
 svg{width:100%;display:block}
 table{width:100%;border-collapse:collapse}
-th{color:var(--dim);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line)}
+th{color:var(--dim);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.06em;text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
 th:first-child,td:first-child{text-align:left}
-td{padding:6px 8px;text-align:right;border-bottom:1px solid #202834}
+th.sorted{color:var(--ink)}
+td{padding:6px 8px;text-align:right;border-bottom:1px solid #202834;white-space:nowrap}
 tbody tr:hover{background:#202834}
-#pairs tbody tr{cursor:pointer}
-#pairs tbody tr.sel{background:#233042;outline:1px solid var(--long)}
-.bar{height:6px;border-radius:3px;background:var(--line);position:relative;margin-top:3px}
-.bar i{position:absolute;top:0;bottom:0;border-radius:3px}
-.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px}
-.chip{border:1px solid var(--line);border-radius:6px;padding:8px 12px;min-width:150px}
+tbody tr.pick{cursor:pointer}
+tbody tr.sel{background:#233042;outline:1px solid var(--long)}
+.chips{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.chip{border:1px solid var(--line);border-radius:6px;padding:8px 12px;min-width:140px}
 .chip .k{color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
 .chip .v{font-family:var(--disp);font-weight:700;font-size:16px}
-.note{color:var(--dim);font-size:12px;margin-top:20px;max-width:78ch}
-.hint{color:var(--dim);font-size:11px;margin-top:6px}
-#pairdetail{display:none}
-#pairdetail .head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-#pairdetail .head h2{margin-bottom:0}
-#pairdetail .head button{background:none;border:1px solid var(--line);border-radius:5px;color:var(--dim);font-family:var(--mono);font-size:11px;padding:4px 10px;cursor:pointer}
+.tag{display:inline-block;border:1px solid var(--line);border-radius:4px;padding:0 6px;font-size:11px;color:var(--dim)}
+.note{color:var(--dim);font-size:12px;margin-top:16px;max-width:82ch}
 #empty{color:var(--dim);padding:40px;text-align:center;display:none}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-@media(max-width:900px){.two{grid-template-columns:1fr}}
+.view{display:none}.view.on{display:block}
 </style>
 </head>
 <body>
 <header>
   <h1>Pairs Book <span>/ walk-forward performance</span></h1>
-  <div class="toggle" id="engines" role="tablist" aria-label="Signal engine"></div>
+  <nav id="tabs">
+    <button data-v="overview" class="on">Overview</button>
+    <button data-v="pairs">Pairs</button>
+    <button data-v="trades">Trades</button>
+    <button data-v="windows">Windows</button>
+  </nav>
 </header>
 
-<div id="empty">No results yet — run <b>python scripts/run_real.py</b> (or run_demo.py), then refresh.</div>
+<div id="empty">No results yet — run a backtest script, then refresh.</div>
 
 <div id="app" style="display:none">
-  <div class="grid" id="stats"></div>
-
-  <div class="row">
-    <div class="panel"><h2>Book equity (net, walk-forward)</h2><svg id="equity" viewBox="0 0 720 240" role="img" aria-label="Equity curve"></svg></div>
-    <div class="panel"><h2>Gross → net attribution</h2><svg id="waterfall" viewBox="0 0 340 240" role="img" aria-label="Cost waterfall"></svg>
-      <div class="note" id="costnote" style="margin-top:8px"></div></div>
+  <div class="filters">
+    <label>Engine</label><select id="fEngine"></select>
+    <label>Window</label><select id="fWindow"></select>
+    <label>Pair</label><select id="fPair"></select>
+    <button class="reset" id="fReset">reset filters</button>
   </div>
+  <div class="scope" id="scope"></div>
 
-  <div class="panel">
-    <h2>Where P&amp;L dies — exit attribution</h2>
-    <div class="chips" id="exits"></div>
-    <div class="hint">converged = spread closed as intended · stopped = divergence stop hit · timed_out = time stop released an unconverged trade · beta_break = hedge ratio drifted, relationship presumed broken · window_end = force-closed at window boundary</div>
-  </div>
-
-  <div class="panel">
-    <h2>Per-pair ledger <span style="color:var(--dim);font-weight:400">— click a pair for detail</span></h2>
-    <table id="pairs"><thead><tr>
-      <th>Pair</th><th>Trades</th><th>Win %</th><th>Gross</th><th>Costs</th><th>Net</th><th>Max DD</th><th>Sharpe</th><th>Net share</th>
-    </tr></thead><tbody></tbody></table>
-  </div>
-
-  <div class="panel" id="pairdetail">
-    <div class="head">
-      <h2 id="pdtitle"></h2>
-      <button id="pdclose">back to book</button>
+  <div class="view on" id="v-overview">
+    <div class="grid" id="stats"></div>
+    <div class="row">
+      <div class="panel"><h2 id="eqTitle">Equity (net, daily MTM)</h2><svg id="equity" viewBox="0 0 720 240"></svg></div>
+      <div class="panel"><h2>Gross → net (closed trades)</h2><svg id="waterfall" viewBox="0 0 340 240"></svg>
+        <div class="note" id="costnote" style="margin-top:8px"></div></div>
     </div>
-    <div class="chips" id="pdchips"></div>
-    <div class="two">
-      <div><h2>Pair equity (net)</h2><svg id="pdequity" viewBox="0 0 460 200"></svg></div>
-      <div><h2>Formation-window specs</h2>
-        <table id="pdspecs"><thead><tr><th>Window</th><th>β</th><th>ADF p</th><th>Half-life</th><th>Corr</th></tr></thead><tbody></tbody></table>
+    <div class="panel">
+      <h2>Where P&amp;L dies — exit attribution</h2>
+      <div class="chips" id="exits"></div>
+      <div class="note">converged = spread closed as intended · stopped = divergence stop · timed_out = time stop · beta_break = hedge ratio drifted · window_end = force-closed at window boundary</div>
+    </div>
+  </div>
+
+  <div class="view" id="v-pairs">
+    <div class="panel">
+      <h2>Per-pair ledger <span style="color:var(--dim);font-weight:400">— click to focus a pair</span></h2>
+      <table id="pairsTbl"><thead></thead><tbody></tbody></table>
+    </div>
+    <div class="panel" id="pairDetail" style="display:none">
+      <h2 id="pdTitle"></h2>
+      <div class="row" style="margin-bottom:0">
+        <div><h2>Pair equity (net, within scope)</h2><svg id="pdEquity" viewBox="0 0 460 200"></svg></div>
+        <div><h2>Formation specs per selected window</h2>
+          <table id="pdSpecs"><thead><tr><th>Window</th><th>β</th><th>ADF p</th><th>Half-life</th><th>Corr</th><th>β drift</th></tr></thead><tbody></tbody></table>
+        </div>
       </div>
     </div>
-    <h2 style="margin-top:16px">Trades</h2>
-    <table id="pdtrades"><thead><tr>
-      <th>Entry</th><th>Exit</th><th>Dir</th><th>Days</th><th>Gross</th><th>Costs</th><th>Net</th><th>Exit</th>
-    </tr></thead><tbody></tbody></table>
+  </div>
+
+  <div class="view" id="v-trades">
+    <div class="panel">
+      <h2>Trade blotter <span style="color:var(--dim);font-weight:400" id="tCount"></span></h2>
+      <div class="chips" id="reasonChips" style="margin-bottom:10px"></div>
+      <table id="tradesTbl"><thead></thead><tbody></tbody></table>
+    </div>
+  </div>
+
+  <div class="view" id="v-windows">
+    <div class="panel">
+      <h2>Walk-forward windows <span style="color:var(--dim);font-weight:400">— click to focus a window</span></h2>
+      <table id="winTbl"><thead></thead><tbody></tbody></table>
+    </div>
   </div>
 
   <p class="note" id="footnote"></p>
@@ -110,155 +127,229 @@ tbody tr:hover{background:#202834}
 
 <script>
 const fmt = n => (n<0?'−':'') + Math.abs(n).toLocaleString('en-US',{maximumFractionDigits:0});
-let DATA=null, engine=null, selPair=null;
+let DATA=null;
+const F = { engine:null, window:'all', pair:'all', reason:'all', view:'overview',
+            sortT:['entry_time',1], sortP:['net',-1] };
 
-async function load(){
-  const r = await fetch('/api/results');
-  if(!r.ok){ document.getElementById('empty').style.display='block'; return; }
-  DATA = await r.json();
-  const names = Object.keys(DATA.engines);
-  engine = names[0];
-  const tg = document.getElementById('engines');
-  tg.innerHTML = names.map(n=>`<button role="tab" data-e="${n}">${n}</button>`).join('');
-  tg.querySelectorAll('button').forEach(b=>b.onclick=()=>{engine=b.dataset.e; render();});
-  document.getElementById('pdclose').onclick=()=>{selPair=null; render();};
-  document.getElementById('app').style.display='block';
-  render();
+const barsPerYear = eng => eng.includes('+nse') ? 252 : 365;
+const E = () => DATA.engines[F.engine];
+
+function windows(){ return E().windows; }
+function winRange(){
+  if(F.window==='all') return null;
+  const w = windows()[+F.window];
+  return [w.trading_start, w.trading_end];
+}
+function inScope(t){
+  const r = winRange();
+  if(r && (t.entry_time < r[0] || t.entry_time > r[1])) return false;
+  if(F.pair!=='all' && t.pair!==F.pair) return false;
+  return true;
+}
+function trades(){ return E().trades.filter(inScope); }
+function tradesR(){ return F.reason==='all' ? trades() : trades().filter(t=>t.exit_reason===F.reason); }
+
+function equitySeries(){
+  // book (or pair) daily cumulative series, sliced to window scope and rebased to 0
+  const src = F.pair==='all' ? E().equity : (E().pair_equity||{})[F.pair]||{};
+  const r = winRange();
+  let entries = Object.entries(src);
+  if(r) entries = entries.filter(([d])=>d>=r[0] && d<=r[1]);
+  if(!entries.length) return [];
+  const base = entries[0][1];
+  return entries.map(([d,v])=>[d, +(v-base).toFixed(2)]);
+}
+function riskStats(){
+  const eq = equitySeries();
+  const cap = E().summary.book.capital_deployed;
+  if(eq.length<3) return {sharpe:null, maxdd:null};
+  const rets=[]; for(let i=1;i<eq.length;i++) rets.push((eq[i][1]-eq[i-1][1])/cap);
+  const mu=rets.reduce((a,b)=>a+b,0)/rets.length;
+  const sd=Math.sqrt(rets.reduce((a,b)=>a+(b-mu)**2,0)/(rets.length-1));
+  let peak=-1e18, dd=0;
+  eq.forEach(([,v])=>{peak=Math.max(peak,v); dd=Math.min(dd,v-peak);});
+  return {sharpe: sd>0? mu/sd*Math.sqrt(barsPerYear(F.engine)) : 0, maxdd: dd};
 }
 
+function init(){
+  const sel=(id,opts,val)=>{const s=document.getElementById(id);
+    s.innerHTML=opts.map(([v,l])=>`<option value="${v}">${l}</option>`).join(''); s.value=val;};
+  sel('fEngine', Object.keys(DATA.engines).map(k=>[k,k]), F.engine);
+  sel('fWindow', [['all','all windows'], ...windows().map((w,i)=>[i,`${w.trading_start} → ${w.trading_end}`])], F.window);
+  const pairSet=[...new Set(E().trades.map(t=>t.pair))].sort();
+  sel('fPair', [['all','all pairs'], ...pairSet.map(p=>[p,p])], F.pair);
+}
 function render(){
-  document.querySelectorAll('#engines button').forEach(b=>b.classList.toggle('on',b.dataset.e===engine));
-  const E = DATA.engines[engine], B = E.summary.book, T = E.summary.trades;
-
-  const stats = [
-    ['Net P&L', fmt(B.net_pnl), B.net_pnl>=0?'pos':'neg'],
-    ['Return on capital', B.return_on_capital_pct.toFixed(1)+'%', B.return_on_capital_pct>=0?'pos':'neg'],
-    ['Sharpe', B.sharpe.toFixed(2), ''],
-    ['Sortino', B.sortino.toFixed(2), ''],
-    ['Max drawdown', fmt(B.max_drawdown), 'neg'],
-    ['Trades', T.count+' ('+T.win_rate_pct+'% win)', ''],
-    ['Median hold', T.median_holding_days+'d', ''],
-    ['Cost drag', B.cost_share_of_gross_pct!=null ? B.cost_share_of_gross_pct+'% of gross' : fmt(B.total_costs)+' abs', '']
-  ];
-  document.getElementById('stats').innerHTML = stats.map(([k,v,c])=>
-    `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
-
-  drawLine('equity', E.equity, 720, 240);
-  drawWaterfall(B);
-  drawExits(E.summary.exit_attribution||{});
-  drawPairs(E.summary.per_pair, B.net_pnl);
-  renderPairDetail(E);
-
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.v===F.view));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='v-'+F.view));
+  init();
+  const r=winRange();
+  document.getElementById('scope').textContent =
+    `scope: ${F.engine} · ${r? r[0]+' → '+r[1] : windows().length+' windows'} · ${F.pair==='all'?'all pairs':F.pair}`;
+  ({overview:rOverview, pairs:rPairs, trades:rTrades, windows:rWindows})[F.view]();
   document.getElementById('footnote').textContent =
-    `${E.windows.length} walk-forward windows · hedge ratios and thresholds frozen at formation · ` +
-    `costs: fees + slippage per leg per side, plus funding drag while positions are open` +
-    (DATA.source ? ` · data: ${DATA.source}` : '');
+    'Curves and Sharpe/drawdown use daily mark-to-market; waterfall, attribution, and tables use closed-trade sums — small differences between the two bases are expected when positions are open at scope edges. ' +
+    (DATA.source? 'Data: '+DATA.source : '');
+}
+
+function rOverview(){
+  const T=trades(), rs=riskStats();
+  const gross=T.reduce((a,t)=>a+t.gross_pnl,0), costs=T.reduce((a,t)=>a+t.costs,0), net=gross-costs;
+  const closed=T.filter(t=>t.exit_reason!=='window_end');
+  const wins=closed.filter(t=>t.net_pnl>0).length;
+  const holds=T.map(t=>t.holding_days).sort((a,b)=>a-b);
+  const stats=[
+    ['Net P&L (closed)', fmt(net), net>=0?'pos':'neg'],
+    ['Sharpe (daily)', rs.sharpe==null?'—':rs.sharpe.toFixed(2), ''],
+    ['Max drawdown', rs.maxdd==null?'—':fmt(rs.maxdd), 'neg'],
+    ['Trades', T.length, ''],
+    ['Win rate', closed.length? Math.round(100*wins/closed.length)+'%':'—', ''],
+    ['Median hold', holds.length? holds[Math.floor(holds.length/2)]+'d':'—', ''],
+    ['Cost drag', gross>0? Math.round(100*costs/gross)+'% of gross' : fmt(costs)+' abs', ''],
+  ];
+  document.getElementById('stats').innerHTML=stats.map(([k,v,c])=>
+    `<div class="stat"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
+  document.getElementById('eqTitle').textContent =
+    (F.pair==='all'?'Book':'Pair '+F.pair)+' equity (net, daily MTM'+(winRange()?', rebased to window start':'')+')';
+  drawLine('equity', equitySeries(), 720, 240);
+  drawWaterfall(gross, costs, net);
+  drawExits(T);
+}
+function rPairs(){
+  const agg={};
+  trades().forEach(t=>{
+    const a=agg[t.pair]??={pair:t.pair,trades:0,wins:0,gross:0,costs:0,net:0};
+    a.trades++; if(t.net_pnl>0)a.wins++; a.gross+=t.gross_pnl; a.costs+=t.costs; a.net+=t.net_pnl;
+  });
+  let rows=Object.values(agg);
+  const [key,dir]=F.sortP;
+  rows.sort((x,y)=>(x[key]>y[key]?1:-1)*dir);
+  const cols=[['pair','Pair'],['trades','Trades'],['wins','Wins'],['gross','Gross'],['costs','Costs'],['net','Net']];
+  document.querySelector('#pairsTbl thead').innerHTML='<tr>'+cols.map(([k,l])=>
+    `<th data-k="${k}" class="${k===key?'sorted':''}">${l}${k===key?(dir>0?' ↑':' ↓'):''}</th>`).join('')+'</tr>';
+  document.querySelector('#pairsTbl tbody').innerHTML=rows.map(a=>
+    `<tr class="pick ${a.pair===F.pair?'sel':''}" data-pair="${a.pair}">
+     <td>${a.pair}</td><td>${a.trades}</td><td>${a.wins}</td>
+     <td>${fmt(a.gross)}</td><td class="amb">${fmt(a.costs)}</td>
+     <td class="${a.net>=0?'pos':'neg'}">${fmt(a.net)}</td></tr>`).join('');
+  document.querySelectorAll('#pairsTbl thead th').forEach(h=>h.onclick=()=>{
+    F.sortP=[h.dataset.k, F.sortP[0]===h.dataset.k? -F.sortP[1] : -1]; render();});
+  document.querySelectorAll('#pairsTbl tbody tr').forEach(tr=>tr.onclick=()=>{
+    F.pair = F.pair===tr.dataset.pair? 'all' : tr.dataset.pair; render();});
+  const box=document.getElementById('pairDetail');
+  if(F.pair==='all'){box.style.display='none'; return;}
+  box.style.display='block';
+  document.getElementById('pdTitle').textContent=F.pair;
+  drawLine('pdEquity', equitySeries(), 460, 200);
+  const r=winRange();
+  const specs=E().pair_specs.filter(s=>s.pair===F.pair && (!r || (s.window_start>=r[0] && s.window_start<=r[1])));
+  document.querySelector('#pdSpecs tbody').innerHTML=specs.map(s=>
+    `<tr><td>${s.window_start}</td><td>${s.beta.toFixed(3)}</td><td>${s.adf_pvalue.toFixed(4)}</td>
+     <td>${s.half_life_days.toFixed(1)}d</td><td>${s.correlation.toFixed(3)}</td>
+     <td>${s.beta_drift==null?'—':s.beta_drift.toFixed(3)}</td></tr>`).join('')
+    || '<tr><td colspan="6" style="color:var(--dim)">not selected in scoped windows</td></tr>';
+}
+function rTrades(){
+  const T=trades(), counts={};
+  T.forEach(t=>counts[t.exit_reason]=(counts[t.exit_reason]||0)+1);
+  document.getElementById('reasonChips').innerHTML=[['all',T.length],...Object.entries(counts)].map(([k,n])=>
+    `<div class="chip pick" data-r="${k}" style="cursor:pointer;${k===F.reason?'outline:1px solid var(--long)':''}">
+     <div class="k">${k.replace('_',' ')}</div><div class="v">${n}</div></div>`).join('');
+  document.querySelectorAll('#reasonChips .chip').forEach(c=>c.onclick=()=>{F.reason=c.dataset.r; render();});
+  let rows=tradesR();
+  const [key,dir]=F.sortT;
+  rows=[...rows].sort((x,y)=>(x[key]>y[key]?1:-1)*dir);
+  document.getElementById('tCount').textContent=`— ${rows.length} shown`;
+  const cols=[['entry_time','Entry'],['exit_time','Exit'],['pair','Pair'],['direction','Dir'],
+              ['holding_days','Days'],['gross_pnl','Gross'],['costs','Costs'],['net_pnl','Net'],['exit_reason','Exit type']];
+  document.querySelector('#tradesTbl thead').innerHTML='<tr>'+cols.map(([k,l])=>
+    `<th data-k="${k}" class="${k===key?'sorted':''}">${l}${k===key?(dir>0?' ↑':' ↓'):''}</th>`).join('')+'</tr>';
+  document.querySelector('#tradesTbl tbody').innerHTML=rows.slice(0,400).map(t=>
+    `<tr><td>${t.entry_time}</td><td>${t.exit_time}</td><td>${t.pair}</td>
+     <td>${t.direction>0?'long':'short'}</td><td>${t.holding_days}</td>
+     <td>${fmt(t.gross_pnl)}</td><td class="amb">${fmt(t.costs)}</td>
+     <td class="${t.net_pnl>=0?'pos':'neg'}">${fmt(t.net_pnl)}</td>
+     <td><span class="tag">${t.exit_reason}</span></td></tr>`).join('');
+  document.querySelectorAll('#tradesTbl thead th').forEach(h=>h.onclick=()=>{
+    F.sortT=[h.dataset.k, F.sortT[0]===h.dataset.k? -F.sortT[1] : 1]; render();});
+}
+function rWindows(){
+  const rows=windows().map((w,i)=>{
+    const T=E().trades.filter(t=>t.entry_time>=w.trading_start && t.entry_time<=w.trading_end
+                                 && (F.pair==='all'||t.pair===F.pair));
+    return {i, w, n:T.length, net:T.reduce((a,t)=>a+t.net_pnl,0)};
+  });
+  document.querySelector('#winTbl thead').innerHTML=
+    '<tr><th>#</th><th>Trading window</th><th>Pairs in book</th><th>Trades</th><th>Net (closed)</th></tr>';
+  document.querySelector('#winTbl tbody').innerHTML=rows.map(({i,w,n,net})=>
+    `<tr class="pick ${String(i)===String(F.window)?'sel':''}" data-w="${i}">
+     <td>${i+1}</td><td>${w.trading_start} → ${w.trading_end}</td>
+     <td style="text-align:left">${w.pairs_found.join(', ')||'—'}</td>
+     <td>${n}</td><td class="${net>=0?'pos':'neg'}">${fmt(net)}</td></tr>`).join('');
+  document.querySelectorAll('#winTbl tbody tr').forEach(tr=>tr.onclick=()=>{
+    F.window = String(F.window)===tr.dataset.w? 'all' : tr.dataset.w; render();});
 }
 
 function drawLine(id, eq, W, H){
   const svg=document.getElementById(id);
-  const entries=Object.entries(eq||{}); if(!entries.length){svg.innerHTML='';return;}
-  const vals=entries.map(e=>e[1]);
+  if(!eq.length){svg.innerHTML='<text x="20" y="30" fill="#8B94A3" font-size="12">no data in scope</text>';return;}
+  const vals=eq.map(e=>e[1]);
   const min=Math.min(0,...vals), max=Math.max(0,...vals), P=36;
   const X=i=>P+(W-2*P)*i/Math.max(vals.length-1,1), Y=v=>H-P-(H-2*P)*(v-min)/(max-min||1);
-  let path='M'+vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' L');
-  const zero=Y(0);
-  const last=vals[vals.length-1];
-  const col=last>=0?'#3FB8AF':'#C75C5C';
+  const path='M'+vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' L');
+  const col=vals[vals.length-1]>=0?'#3FB8AF':'#C75C5C';
   const ticks=[0,.5,1].map(f=>min+f*(max-min));
   svg.innerHTML =
     ticks.map(t=>`<line x1="${P}" x2="${W-P}" y1="${Y(t)}" y2="${Y(t)}" stroke="#232B36"/>
       <text x="${P-6}" y="${Y(t)+4}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${fmt(t)}</text>`).join('') +
-    `<line x1="${P}" x2="${W-P}" y1="${zero}" y2="${zero}" stroke="#3A4452"/>` +
-    `<path d="${path} L${X(vals.length-1)},${zero} L${X(0)},${zero} Z" fill="${col}" opacity="0.08"/>` +
+    `<line x1="${P}" x2="${W-P}" y1="${Y(0)}" y2="${Y(0)}" stroke="#3A4452"/>` +
+    `<path d="${path} L${X(vals.length-1)},${Y(0)} L${X(0)},${Y(0)} Z" fill="${col}" opacity="0.08"/>` +
     `<path d="${path}" fill="none" stroke="${col}" stroke-width="1.8"/>` +
-    `<text x="${P}" y="${H-8}" fill="#8B94A3" font-size="10" font-family="IBM Plex Mono">${entries[0][0]}</text>` +
-    `<text x="${W-P}" y="${H-8}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${entries[entries.length-1][0]}</text>`;
+    `<text x="${P}" y="${H-8}" fill="#8B94A3" font-size="10" font-family="IBM Plex Mono">${eq[0][0]}</text>` +
+    `<text x="${W-P}" y="${H-8}" fill="#8B94A3" font-size="10" text-anchor="end" font-family="IBM Plex Mono">${eq[eq.length-1][0]}</text>`;
 }
-
-function drawWaterfall(B){
+function drawWaterfall(g,c,n){
   const svg=document.getElementById('waterfall');
-  const g=B.gross_pnl, c=B.total_costs, n=B.net_pnl;
   const lo=Math.min(0,g,n), hi=Math.max(0,g,1), W=340,H=240,P=30,bw=70;
   const y=v=>H-P-(H-2*P-20)*(v-lo)/(hi-lo||1);
-  const bars=[
-    {x:P, a:0, b:g, col:g>=0?'#3FB8AF':'#C75C5C', lab:'gross', val:g},
-    {x:P+bw+35, a:n, b:g, col:'#E0A43C', lab:'costs', val:-c},
-    {x:P+2*(bw+35), a:0, b:n, col:n>=0?'#3FB8AF':'#C75C5C', lab:'net', val:n}
-  ];
-  svg.innerHTML = `<line x1="${P-6}" x2="${W-P+40}" y1="${y(0)}" y2="${y(0)}" stroke="#3A4452"/>` +
-   bars.map(b=>{
-    const top=y(Math.max(b.a,b.b)), bot=y(Math.min(b.a,b.b));
-    return `<rect x="${b.x}" y="${top}" width="${bw}" height="${Math.max(bot-top,2)}" fill="${b.col}" opacity="${b.lab==='costs'?0.85:1}" rx="3"/>
-     <text x="${b.x+bw/2}" y="${top-8}" fill="#E9E6DF" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${fmt(b.val)}</text>
-     <text x="${b.x+bw/2}" y="${H-6}" fill="#8B94A3" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${b.lab}</text>`;}).join('');
-  document.getElementById('costnote').textContent = B.cost_share_of_gross_pct!=null
-    ? `Costs consumed ${B.cost_share_of_gross_pct}% of gross — the viability margin lives here.`
-    : `Gross is negative: costs (${fmt(B.total_costs)}) deepen a loss the signal already made.`;
+  const bars=[{x:P,a:0,b:g,col:g>=0?'#3FB8AF':'#C75C5C',lab:'gross',val:g},
+              {x:P+bw+35,a:n,b:g,col:'#E0A43C',lab:'costs',val:-c},
+              {x:P+2*(bw+35),a:0,b:n,col:n>=0?'#3FB8AF':'#C75C5C',lab:'net',val:n}];
+  svg.innerHTML=`<line x1="${P-6}" x2="${W-P+40}" y1="${y(0)}" y2="${y(0)}" stroke="#3A4452"/>`+
+    bars.map(b=>{const top=y(Math.max(b.a,b.b)),bot=y(Math.min(b.a,b.b));
+      return `<rect x="${b.x}" y="${top}" width="${bw}" height="${Math.max(bot-top,2)}" fill="${b.col}" opacity="${b.lab==='costs'?0.85:1}" rx="3"/>
+      <text x="${b.x+bw/2}" y="${top-8}" fill="#E9E6DF" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${fmt(b.val)}</text>
+      <text x="${b.x+bw/2}" y="${H-6}" fill="#8B94A3" font-size="11" text-anchor="middle" font-family="IBM Plex Mono">${b.lab}</text>`;}).join('');
+  document.getElementById('costnote').textContent = g>0
+    ? `Costs consumed ${Math.round(100*c/g)}% of gross within this scope.`
+    : `Gross is negative in this scope: costs (${fmt(c)}) deepen a loss the signal already made.`;
 }
-
-function drawExits(att){
-  const order=["converged","stopped","timed_out","beta_break","window_end","closed"];
-  const el=document.getElementById('exits');
-  el.innerHTML = order.filter(k=>att[k]).map(k=>{
-    const a=att[k], cls=a.net_pnl>=0?'pos':'neg';
+function drawExits(T){
+  const agg={};
+  T.forEach(t=>{const a=agg[t.exit_reason]??={count:0,net:0,hold:0};
+    a.count++; a.net+=t.net_pnl; a.hold+=t.holding_days;});
+  const order=["converged","stopped","timed_out","beta_break","window_end"];
+  document.getElementById('exits').innerHTML=order.filter(k=>agg[k]).map(k=>{
+    const a=agg[k];
     return `<div class="chip"><div class="k">${k.replace('_',' ')}</div>
-      <div class="v ${cls}">${fmt(a.net_pnl)}</div>
-      <div class="hint">${a.count} trades · avg ${a.avg_holding_days}d held</div></div>`;
-  }).join('') || '<span class="hint">no trades</span>';
+      <div class="v ${a.net>=0?'pos':'neg'}">${fmt(a.net)}</div>
+      <div style="color:var(--dim);font-size:11px">${a.count} trades · avg ${(a.hold/a.count).toFixed(1)}d</div></div>`;
+  }).join('')||'<span style="color:var(--dim)">no trades in scope</span>';
 }
 
-function drawPairs(pairs, bookNet){
-  const tb=document.querySelector('#pairs tbody');
-  tb.innerHTML = pairs.map(p=>{
-    const denom = Math.max(...pairs.map(q=>Math.abs(q.net_pnl)),1);
-    const share = 100*Math.abs(p.net_pnl)/denom;
-    return `<tr data-pair="${p.pair}" class="${p.pair===selPair?'sel':''}">
-      <td>${p.pair}</td><td>${p.trades}</td><td>${p.win_rate}</td>
-      <td>${fmt(p.gross_pnl)}</td><td class="amb">${fmt(p.costs)}</td>
-      <td class="${p.net_pnl>=0?'pos':'neg'}">${fmt(p.net_pnl)}</td>
-      <td class="neg">${fmt(p.max_dd)}</td><td>${p.sharpe.toFixed(2)}</td>
-      <td style="width:120px"><div class="bar"><i style="left:0;width:${share}%;background:${p.net_pnl>=0?'var(--long)':'var(--loss)'}"></i></div></td>
-    </tr>`;
-  }).join('');
-  tb.querySelectorAll('tr').forEach(r=>r.onclick=()=>{selPair=r.dataset.pair; render();
-    document.getElementById('pairdetail').scrollIntoView({behavior:'smooth'});});
+async function load(){
+  const r=await fetch('/api/results');
+  if(!r.ok){document.getElementById('empty').style.display='block';return;}
+  DATA=await r.json();
+  F.engine=Object.keys(DATA.engines)[0];
+  document.getElementById('app').style.display='block';
+  document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{F.view=b.dataset.v; render();});
+  document.getElementById('fEngine').onchange=e=>{F.engine=e.target.value; F.window='all'; F.pair='all'; F.reason='all'; render();};
+  document.getElementById('fWindow').onchange=e=>{F.window=e.target.value; render();};
+  document.getElementById('fPair').onchange=e=>{F.pair=e.target.value; render();};
+  document.getElementById('fReset').onclick=()=>{F.window='all'; F.pair='all'; F.reason='all'; render();};
+  render();
 }
-
-function renderPairDetail(E){
-  const box=document.getElementById('pairdetail');
-  if(!selPair){ box.style.display='none'; return; }
-  box.style.display='block';
-  document.getElementById('pdtitle').textContent=selPair;
-
-  const trades=E.trades.filter(t=>t.pair===selPair);
-  const specs=E.pair_specs.filter(s=>s.pair===selPair);
-  const eq=(E.pair_equity||{})[selPair]||{};
-  const net=trades.reduce((a,t)=>a+t.net_pnl,0);
-  const wins=trades.filter(t=>t.net_pnl>0).length;
-  const conv=trades.filter(t=>t.exit_reason==='converged').length;
-
-  document.getElementById('pdchips').innerHTML=[
-    ['Net P&L',fmt(net),net>=0?'pos':'neg'],
-    ['Trades',trades.length,''],
-    ['Win rate',trades.length?Math.round(100*wins/trades.length)+'%':'—',''],
-    ['Converged exits',trades.length?conv+' / '+trades.length:'—',''],
-    ['Windows selected',specs.length,''],
-  ].map(([k,v,c])=>`<div class="chip"><div class="k">${k}</div><div class="v ${c}">${v}</div></div>`).join('');
-
-  drawLine('pdequity', eq, 460, 200);
-
-  document.querySelector('#pdspecs tbody').innerHTML=specs.map(s=>
-    `<tr><td>${s.window_start}</td><td>${s.beta.toFixed(3)}</td><td>${s.adf_pvalue.toFixed(4)}</td>
-     <td>${s.half_life_days.toFixed(1)}d</td><td>${s.correlation.toFixed(3)}</td></tr>`).join('');
-
-  document.querySelector('#pdtrades tbody').innerHTML=trades.map(t=>
-    `<tr><td>${t.entry_time}</td><td>${t.exit_time}</td>
-     <td>${t.direction>0?'long':'short'} spread</td><td>${t.holding_days}</td>
-     <td>${fmt(t.gross_pnl)}</td><td class="amb">${fmt(t.costs)}</td>
-     <td class="${t.net_pnl>=0?'pos':'neg'}">${fmt(t.net_pnl)}</td><td>${t.exit_reason}</td></tr>`).join('');
-}
-
 load();
 </script>
 </body>
